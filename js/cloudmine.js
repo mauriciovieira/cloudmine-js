@@ -166,9 +166,6 @@
             } else {
                 opts = merge({}, settings, opts);
 
-
-                console.log(callbacks);
-
                 var tokenUrl = opts.api_url + '/v1/app/' + opts.app_id + '/account/login';
 
                 $.ajax(tokenUrl, {
@@ -551,8 +548,6 @@
         *          { success: function(){ ... }, error: function(){ ... } }
        */
         _parseCallbacks: function(callbacks){
-          console.log(callbacks);
-
 
           // We're going to return _callbacks, which will have both success and error (empty by default)
           var _callbacks = { success: function(){}, error: function(){} };
