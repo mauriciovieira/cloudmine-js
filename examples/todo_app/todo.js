@@ -2,28 +2,33 @@
 // Features: - Simple data pushing: Creating new items and updating them as "done" using Cloudmine
 //             backend object storage
 //           - Easy user management: backend login/logout and registration service implementation
-// Global var
+// Global variables: - cloudmine:       instance of Cloudmine js library
+//                   - todo:            object of functions for this app
+//                   - priority_button: prototype for custom button that sets new todo item priority, 
+//                                      called by todo.draw_and_append_item
+
+// Cloudmine library functions in use in this sample app:
+//    login:        for logging in (email/password) and receiving a session_token which is saved in a cookie
+//    registerUser: for creating a new user account (email/password)
+//    updateValue:  for creating to-do items and marking them as done or deleting them
 
 $(document).ready(function(){
   // Initializing the Cloudmine library requires your App ID and personal API key,
   // which you can find on your Dashboard on cloudmine.me
-  var app_id = 'd23a60e7d44f401aa75643e69899b004',
-      api_key = 'f46828a750794cfb932d01f22b2c6d10',
+  var app_id = '84e5c4a381e7424b8df62e055f0b69db',
+      api_key = '84c8c3f1223b4710b180d181cd6fb1df',
       login_user, register_user, cookie, _c;
 
   // Binding event handlers to the login/registration buttons
   $('#login_button').click(function(){
     todo.login_user();
   });
-
   $('#register_button').click(function(){
     todo.register_user();
   });
-
   $('#create_button').click(function(){
     todo.create_item();
   });
-
   $('#logout_button').click(function(){
     todo.logout_user();
   });
@@ -34,7 +39,7 @@ $(document).ready(function(){
       todo.login_user();
     }
   });
-
+  
   $('#login_email').focus();
 
   // Initializing Cloudmine library with App ID and API key
@@ -44,20 +49,20 @@ $(document).ready(function(){
   });
 
 
+
   // "todo" object wrapper for all app functions
   todo = {
 
     data: [ ], // Will be filled in upon login
 
-    priority_colors: ['', '#C3DD89', '#FBF285', '#F9B3A1'],
+    priority_colors: ['', '#F9B3A1', '#FBF285', '#C3DD89'],
 
     selected_priority: 1,
 
     // Login/Registration requests: these are bound with the App ID and API key
     // that were given to the Cloudmine object upon cloudmine.init()
 
-    // register_user additionally calls login_user upon a successful registration.
-    // 
+    // register_user also calls login_user upon successful registration.
 
     // Send Cloudmine request to register a new user  
     register_user: function(){
@@ -88,6 +93,7 @@ $(document).ready(function(){
       $('#login_button').attr('value', 'Logging in...');
       $('#register_button, #or').hide();
 
+      // Run the cloudmine.login
       cloudmine.login(credentials, function(response){ 
         todo.process_login(response, set_cookie); 
       });
@@ -186,13 +192,18 @@ $(document).ready(function(){
     draw_list: function(response){
       var key, data; 
 
+      if (response.success){
+        response = response.success;
+      }
+
+
       $('#restoring_session').hide();
       $('#todo_header').show();
        //
       // Drawing the todo items
      //
       for (var key in response){
-
+      
         // Omit the last object in CM's data response, it's not useful to this
         if (key == 'forEach'){           
           return 
@@ -208,11 +219,12 @@ $(document).ready(function(){
       var todo_item, // Shortcut to the data for this todo item
           item_text, // The text that will display on the item
           todo_div, todo_checkbox, todo_delete; // DOM elements (main div, checkbox that indicates done-ness)
+
       todo.data[item_data.__id__] = item_data;
       // Make DOM elements: list item div and checkbox for done/not done
 
       item_text = item_data.text;
-
+      
       if (item_data.deadline.timestamp != null){
         parsed_deadline = todo.parse_remaining_time(item_data.deadline.timestamp); 
         if (parsed_deadline == 0){
@@ -258,11 +270,11 @@ $(document).ready(function(){
 
     setup_priority_buttons: function(){
       var _i, pb, all_pbs = [ ];
-      for (_i = 1; _i < 4; _i ++){
+      for (_i = 3; _i > 0; _i --){
         pb = new priority_button(_i);
         $('#priority_buttons').append(pb.button);
         all_pbs.push(pb);
-        if (_i == 1){
+        if (_i == 3){
           pb.select();
         }
       }
@@ -341,7 +353,7 @@ $(document).ready(function(){
     $('#new_item').css({
       'background-color': _this.color
     });
-  },
+  }
 
   priority_button.prototype.deselect = function(){
     this.selected = false;

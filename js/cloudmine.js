@@ -5,7 +5,9 @@
         api_key: null,
         session_token: null
     };
+  
 
+    // Takes three objects. Combines the second and third and puts into first. Third object will overwrite second if they share keys.
     var merge = function(to, from1, from2){
         var from_list = [from1 || {}, from2 || {}];
         for(var from in from_list){
@@ -157,7 +159,7 @@
             if (user.hasOwnProperty('session_token')) {
                 // User is already logged in, so just set the session token.
                 settings.session_token = user.session_token;
-                if(typeof(callback) == 'function') {    // BUG: settings.session_token instead of just session_token
+                if(typeof(callback) == 'function') {
                     callback.apply(this, { session_token: settings.session_token });
                 }
             } else {
@@ -316,7 +318,7 @@
          * Parameter: callbacks
          *     Either a function that will be called with an object of succesfully
          *     retreived key/value pairs that match the request or an object
-         *     with 'success' and 'errors' callback functions.
+         *     with 'success' and 'error' callback functions.
          *
          * Parameter: opts
          *     An object with additional configuration options.
@@ -333,10 +335,13 @@
 
             url = apply_params(url, opts);
 
-            if( typeof(callbacks) == "function" ){
-                callbacks = { success: callbacks };
-            }
+            // If we got a function, assume it's the success function.
 
+
+            callbacks = this._parseCallbacks(callbacks);
+
+
+/*
             var callback_wrapper = callbacks && function(data){
                 // data has .success and .errors
                 if(data.success){
@@ -353,12 +358,13 @@
                     }
                     callbacks.error(data.errors);
                 };
-            };
+            };*/
 
             $.ajax(url, {
                 headers: make_headers(opts),
                 dataType: 'json',
-                success: callback_wrapper
+                success: callbacks.success,
+                error: callbacks.error
             });
         },
 
@@ -528,6 +534,51 @@
 
         log: function(msg){
             window.console && console.log(msg);
+        },
+
+
+       /**
+        * Takes any user input for callbacks and returns an object that will always work with $.ajax.success and .error. Resorts to empty functions.
+        *
+        * Parameter: callbacks
+        *     Anything. If it's a function, it will be set as the success function with no error function.
+        *     If it's an object, the success and/or error properties of it will be returned as they are. (Whatever's available). Other properties will be ignored.
+        *     
+        * Returns: object with 'success' and 'error' properties:
+        *          { success: function(){ ... }, error: function(){ ... } }
+       */
+        _parseCallbacks: function(callbacks){
+          console.log(callbacks);
+
+
+          // We're going to return _callbacks, which will have both success and error (empty by default)
+          var _callbacks = { success: function(){}, error: function(){} };
+
+          // If no callbacks were defined, return the empty object and run empty functions
+          if (callbacks == undefined){
+            return _callbacks
+          }
+
+          // If we get a function, assume it's the success function and return with no error function
+          if( typeof(callbacks) == "function" ){
+              _callbacks.success = callbacks;
+              return _callbacks;
+          }
+
+          // If we get an object supply whatever properties there are
+          if ( typeof(callbacks) == "object" ){
+
+              if ( callbacks.hasOwnProperty("success")){
+                _callbacks.success = callbacks.success;
+              }
+              if ( callbacks.hasOwnProperty("error")){
+                _callbacks.error = callbacks.error;
+              }
+              return _callbacks;
+          }
+          
+          // In the event of weirdness that we didn't capture, return empty callbacks
+          return _callbacks
         }
     };
 
