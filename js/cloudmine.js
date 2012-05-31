@@ -119,8 +119,10 @@
          *     An object with additional configuration options.
          *     Can be used to override: api_url, app_id, api_key
          */
-        createUser: function(user, callback, opts) {
+        createUser: function(user, callbacks, opts) {
             opts = merge({}, settings, opts);
+
+            callbacks = this._parseCallbacks(callbacks);
 
             var tokenUrl = opts.api_url + '/v1/app/' + opts.app_id + '/account/create';
 
@@ -133,7 +135,8 @@
                 type: 'PUT',
                 headers: { 'X-CloudMine-ApiKey' : opts.api_key },
                 data: JSON.stringify({ email: user.username, password: user.password }),
-                success: callback
+                success: callbacks.success,
+                error: callbacks.error
             });
         },
 
@@ -197,8 +200,10 @@
          *     An object with additional configuration options.
          *     Can be used to override: api_url, app_id, api_key, session_token
          */
-        logout: function(callback, opts) {
+        logout: function(callbacks, opts) {
             opts = merge({}, settings, opts);
+
+            callbacks = this._parseCallbacks(callbacks);
 
             if(!opts.session_token)
                 return; // nothing to do here
@@ -214,10 +219,9 @@
                 headers: { 'X-CloudMine-ApiKey' : opts.api_key, 'X-CloudMine-SessionToken': opts.session_token },
                 success: function(data, textStatus, jqXHR) {
                     settings.session_token = null;
-                    if(typeof(callback) == 'function') {
-                        callback.apply(this, arguments);
-                    }
-                }
+                    callbacks.success.apply(this, arguments);
+                },
+                error: callbacks.error
             });
         },
 
@@ -244,11 +248,13 @@
          *     Can be used to override: api_url, app_id, api_key, method, session_token
          *     And to specify extension parameters: f, limit, count, etc.
          */
-        setValues: function(values, callback, opts){
+        setValues: function(values, callbacks, opts){
             opts = merge({}, settings, opts);
             var url = build_url(opts, "text");
 
             url = apply_params(url, opts);
+
+            callbacks = this._parseCallbacks(callbacks);
 
             $.ajax(url, {
                 headers: make_headers(opts),
@@ -257,7 +263,8 @@
                 type: opts.method || 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(values),
-                success: callback
+                success: callbacks.success,
+                error: callbacks.error
             });
         },
 
@@ -279,10 +286,11 @@
          *     Can be used to override: api_url, app_id, api_key, method, session_token
          *     And to specify extension parameters: f, limit, count, etc.
          */
-        updateValue: function(key, value, callback, opts){
+        updateValue: function(key, value, callbacks, opts){
             var data = {};
             data[key] = value;
-            cm.setValues(data, callback, merge(opts || {}, {method: "POST"}));
+            // Not running _parseCallbacks here... we'll catch it in setValues
+            cm.setValues(data, callbacks, merge(opts || {}, {method: "POST"}));
         },
 
         /**
@@ -303,10 +311,11 @@
          *     Can be used to override: api_url, app_id, api_key, method, session_token
          *     And to specify extension parameters: f, limit, count, etc.
          */
-        setValue: function(key, value, callback, opts){
+        setValue: function(key, value, callbacks, opts){
             var data = {};
             data[key] = value;
-            cm.setValues(data, callback, merge(opts || {}, {method: "PUT"}));
+            // Not running _parseCallbacks here... we'll catch it in setValues
+            cm.setValues(data, callbacks, merge(opts || {}, {method: "PUT"}));
         },
 
         /**
@@ -341,7 +350,9 @@
             callbacks = this._parseCallbacks(callbacks);
 
 
-/*
+/*  I think this isn't needed anymore, because the user is supposed to parse the success and error objects in a 200 response.
+    Commenting it out for now though.
+
             var callback_wrapper = callbacks && function(data){
                 // data has .success and .errors
                 if(data.success){
@@ -379,8 +390,8 @@
          * Parameter: keys
          *     An array of key names to delete.  Can be set to null to delete all data.
          */
-        deleteValues: function(callback, keys, opts){
-            return cm.deleteKeys(keys, callback, opts);
+        deleteValues: function(callbacks, keys, opts){
+            return cm.deleteKeys(keys, callbacks, opts);
         },
 
         /**
@@ -397,7 +408,7 @@
          *     Can be used to override: api_url, app_id, api_key, method, user
          *     And to specify extension parameters: f, limit, count, etc.
          */
-        deleteKeys: function(keys, callback, opts){
+        deleteKeys: function(keys, callbacks, opts){
             opts = merge({}, settings, opts);
             var url = build_url(opts, "data");
 
@@ -409,10 +420,13 @@
 
             url = apply_params(url, opts);
 
+            callbacks = this._parseCallbacks(callbacks);
+
             $.ajax(url, {
                 headers: make_headers(opts),
                 type: 'DELETE',
-                success: callback
+                success: callbacks.success,
+                error: callbacks.error
             });
         },
 
@@ -434,7 +448,7 @@
          *     Can be used to override: api_url, app_id, api_key, method, user
          *     And to specify extension parameters: f, limit, count, etc.
          */
-        search: function(query, callback, opts){
+        search: function(query, callbacks, opts){
             opts = merge({}, settings, opts);
             var url = build_url(opts, "search");
 
@@ -444,7 +458,9 @@
 
             url = apply_params(url, opts);
 
-            var callback_wrapper = callback && function(data){
+            callbacks = this._parseCallbacks(callbacks);
+
+/*            var callback_wrapper = callback && function(data){
                 // data has .success and .errors
                 if(data.success && !data.success.forEach){
                     merge(data.success, {forEach: forEach});
@@ -456,11 +472,13 @@
 
                 callback(data);
             };
+*/
 
             $.ajax(url, {
                 headers: make_headers(opts),
                 dataType: 'json',
-                success: callback_wrapper
+                success: callbacks.success,
+                error: callbacks.error
             });
         },
 

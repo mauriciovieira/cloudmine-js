@@ -30,7 +30,7 @@ $(document).ready(function(){
     todo.create_item();
   });
   $('#logout_button').click(function(){
-    todo.logout_user();
+    cloudmine.logout(todo.logout_user);
   });
 
   // Log the user in by default on hitting Enter
