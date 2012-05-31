@@ -103,13 +103,14 @@ $(document).ready(function(){
       var _splice, cookies;
       // Read for session cookie
       document.cookie = 'cloudmineTodoSession=none; expires=' + new Date(0).toUTCString() + '; path=/';
-
+      // Reset everything
       $('#todo').empty().hide();
       $('#todo_header, #new').hide();
       $('#login, #or, #register_button').show();
       $('#login_button').attr('value', 'Login');
       $('#login_email, #login_password').val('');
       $('#login_email').focus();
+      $('#priority_buttons').html('Priority:');
     },
 
     process_login: function(response, set_cookie){
