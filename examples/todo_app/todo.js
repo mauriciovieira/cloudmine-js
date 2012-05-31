@@ -7,8 +7,8 @@
 $(document).ready(function(){
   // Initializing the Cloudmine library requires your App ID and personal API key,
   // which you can find on your Dashboard on cloudmine.me
-  var app_id = '84e5c4a381e7424b8df62e055f0b69db',
-      api_key = '84c8c3f1223b4710b180d181cd6fb1df',
+  var app_id = 'd23a60e7d44f401aa75643e69899b004',
+      api_key = 'f46828a750794cfb932d01f22b2c6d10',
       login_user, register_user, cookie, _c;
 
   // Binding event handlers to the login/registration buttons
