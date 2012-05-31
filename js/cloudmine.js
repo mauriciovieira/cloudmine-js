@@ -157,8 +157,8 @@
             if (user.hasOwnProperty('session_token')) {
                 // User is already logged in, so just set the session token.
                 settings.session_token = user.session_token;
-                if(typeof(callback) == 'function') {
-                    callback.apply(this, { session_token: session_token });
+                if(typeof(callback) == 'function') {    // BUG: settings.session_token instead of just session_token
+                    callback.apply(this, { session_token: settings.session_token });
                 }
             } else {
                 opts = merge({}, settings, opts);
