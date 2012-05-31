@@ -5,7 +5,7 @@
 // Global variables: - cloudmine:       instance of Cloudmine js library
 //                   - todo:            object of functions for this app
 //                   - priority_button: prototype for custom button that sets new todo item priority, 
-//                                      called by todo.draw_and_append_item
+//                                      called by todo.draw_and_prepend_item
 
 // Cloudmine library functions in use in this sample app:
 //    login:        for logging in (email/password) and receiving a session_token which is saved in a cookie
@@ -179,7 +179,7 @@ $(document).ready(function(){
       }
 
       $('#new_item').val('');
-      todo.push_item(data, undefined, todo.draw_and_append_item);
+      todo.push_item(data, undefined, todo.draw_and_prepend_item);
     },
 
     delete_item: function(key){
@@ -196,7 +196,6 @@ $(document).ready(function(){
         response = response.success;
       }
 
-
       $('#restoring_session').hide();
       $('#todo_header').show();
        //
@@ -210,12 +209,12 @@ $(document).ready(function(){
         }
         // The variable holding the data we want for this item
         data = response[key];
-        todo.draw_and_append_item(data);
+        todo.draw_and_prepend_item(data);
       }
 
     },
 
-    draw_and_append_item: function(item_data){
+    draw_and_prepend_item: function(item_data){
       var todo_item, // Shortcut to the data for this todo item
           item_text, // The text that will display on the item
           todo_div, todo_checkbox, todo_delete; // DOM elements (main div, checkbox that indicates done-ness)
@@ -265,7 +264,7 @@ $(document).ready(function(){
       // Commit the element to the page.
       $(todo_div).append(todo_delete);
       $(todo_wrapper).prepend(todo_div); // Prepend to keep the linebreak at the end.
-      $('#todo').append(todo_wrapper);
+      $('#todo').prepend(todo_wrapper);
     },
 
     setup_priority_buttons: function(){

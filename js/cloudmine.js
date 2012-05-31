@@ -149,21 +149,25 @@
          *
          * Parameter: callback
          *     A function that gets called when the operation returns. This function is passed an object with the data in
-         *     the response body.
+        *     the response body.
          *
          * Parameter: opts
          *     An object with additional configuration options.
          *     Can be used to override: api_url, app_id, api_key
          */
-        login: function(user, callback, opts) {
+        login: function(user, callbacks, opts) {
+
+            callbacks = this._parseCallbacks(callbacks);
+
             if (user.hasOwnProperty('session_token')) {
                 // User is already logged in, so just set the session token.
                 settings.session_token = user.session_token;
-                if(typeof(callback) == 'function') {
-                    callback.apply(this, { session_token: settings.session_token });
-                }
+                callbacks.success.apply(this, { session_token: settings.session_token });
             } else {
                 opts = merge({}, settings, opts);
+
+
+                console.log(callbacks);
 
                 var tokenUrl = opts.api_url + '/v1/app/' + opts.app_id + '/account/login';
 
@@ -178,10 +182,9 @@
                     headers: { 'X-CloudMine-ApiKey' : opts.api_key, 'Authorization': get_auth(user) },
                     success: function(data, textStatus, jqXHR) {
                         settings.session_token = data.session_token;
-                        if(typeof(callback) == 'function') {
-                            callback.apply(this, arguments);
-                        }
-                    }
+                        callbacks.success.apply(this, arguments);
+                    },
+                    error: callbacks.error
                 });
             }
         },
