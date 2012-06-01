@@ -536,29 +536,24 @@
           var _callbacks = { success: function(){}, error: function(){} };
 
           // If no callbacks were defined, return the empty object and run empty functions
-          if (callbacks == undefined){
-            return _callbacks
-          }
+          if (callbacks != undefined){
 
-          // If we get a function, assume it's the success function and return with no error function
-          if( typeof(callbacks) == "function" ){
-              _callbacks.success = callbacks;
+              // If we get a function, assume it's the success function and return with no error function
+              if( typeof(callbacks) == "function" ){
+                  _callbacks.success = callbacks;
 
-              return _callbacks;
-          }
 
-          // If we get an object supply whatever properties there are
-          if ( typeof(callbacks) == "object" ){
+              // If we get an object supply whatever properties there are
+              } else if ( typeof(callbacks) == "object" ){
 
-              if ( callbacks.hasOwnProperty("success")){
-                  _callbacks.success = callbacks.success;
+                  if ( callbacks.hasOwnProperty("success")){
+                      _callbacks.success = callbacks.success;
+                  }
 
+                  if ( callbacks.hasOwnProperty("error")){
+                    _callbacks.error = callbacks.error;
+                  }
               }
-              if ( callbacks.hasOwnProperty("error")){
-                _callbacks.error = callbacks.error;
-              }
-              
-              return _callbacks;
           }
           
           // In the event of weirdness that we didn't capture, return empty callbacks
