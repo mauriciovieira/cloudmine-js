@@ -179,6 +179,7 @@ $(document).ready(function(){
         return
       }
 
+
       $('#new_item').val('');
       todo.push_item(data, undefined, todo.draw_and_prepend_item);
     },
@@ -191,7 +192,7 @@ $(document).ready(function(){
     },
 
     draw_list: function(response){
-      var key, data; 
+      var data; 
 
       if (response.success){
         response = response.success;
@@ -223,11 +224,11 @@ $(document).ready(function(){
       todo.data[item_data.__id__] = item_data;
       // Make DOM elements: list item div and checkbox for done/not done
 
-      item_text = item_data.text;
+      item_text = '';
       
       if (item_data.deadline.timestamp != null){
         parsed_deadline = todo.parse_remaining_time(item_data.deadline.timestamp); 
-        if (parsed_deadline == 0){
+        if (parsed_deadline <= 0){
           item_text += '<span class="overdue">Overdue</span>';
         } else {
         item_text += '<span class="due">Due in ' + parsed_deadline + ' hours.</span>';
@@ -235,7 +236,8 @@ $(document).ready(function(){
       }
 
       todo_wrapper = $('<span item="' + item_data.__id__ + '"><br></span>');
-      todo_div = $('<div class="todo_item">' + item_text + '</div>');
+      todo_div = $('<div class="todo_item"><span class="value"></span>' + item_text + '</div>');
+      todo_div.find('.value').text(item_data.text);
       todo_checkbox = $('<input type="checkbox" />'),
       todo_delete = $('<div class="delete_button"></div>');
 
