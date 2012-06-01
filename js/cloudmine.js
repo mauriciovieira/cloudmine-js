@@ -6,8 +6,9 @@
         session_token: null
     };
   
-
-    // Takes three objects. Combines the second and third and puts into first. Third object will overwrite second if they share keys.
+    /*
+      * Takes three objects. Combines the second and third and puts into first. Third object will overwrite second if they share keys.
+    */
     var merge = function(to, from1, from2){
         var from_list = [from1 || {}, from2 || {}];
         for(var from in from_list){
@@ -346,30 +347,7 @@
 
             // If we got a function, assume it's the success function.
 
-
             callbacks = this._parseCallbacks(callbacks);
-
-
-/*  I think this isn't needed anymore, because the user is supposed to parse the success and error objects in a 200 response.
-    Commenting it out for now though.
-
-            var callback_wrapper = callbacks && function(data){
-                // data has .success and .errors
-                if(data.success){
-                    if(!data.success.forEach){
-                        merge(data.success, {forEach: forEach});
-                    }
-
-                    callbacks.success(data.success);
-                };
-
-                if(callbacks.error){
-                    if(!data.errors.forEach){
-                        merge(data.errors, {forEach: forEach});
-                    }
-                    callbacks.error(data.errors);
-                };
-            };*/
 
             $.ajax(url, {
                 headers: make_headers(opts),
@@ -460,19 +438,6 @@
 
             callbacks = this._parseCallbacks(callbacks);
 
-/*            var callback_wrapper = callback && function(data){
-                // data has .success and .errors
-                if(data.success && !data.success.forEach){
-                    merge(data.success, {forEach: forEach});
-                };
-
-                if(data.errors && !data.errors.forEach){
-                    merge(data.errors, {forEach: forEach});
-                };
-
-                callback(data);
-            };
-*/
 
             $.ajax(url, {
                 headers: make_headers(opts),
@@ -516,11 +481,11 @@
                            'Authorization': get_auth(opts.user) },
                 type: opts.method || 'POST',
                 statusCode: {
-                    200: callbacks.valid,
-                    201: callbacks.created,
-                    401: callbacks.unauthorized,
-                    404: callbacks.error,
-                    400: callbacks.error
+                    200: callbacks.valid || callbacks.success || function(){ },
+                    201: callbacks.created || function(){ },
+                    401: callbacks.unauthorized || function(){ },
+                    404: callbacks.error || function(){ },
+                    400: callbacks.error || function(){ }
                 }
             });
         },
@@ -578,6 +543,7 @@
           // If we get a function, assume it's the success function and return with no error function
           if( typeof(callbacks) == "function" ){
               _callbacks.success = callbacks;
+
               return _callbacks;
           }
 
@@ -585,18 +551,20 @@
           if ( typeof(callbacks) == "object" ){
 
               if ( callbacks.hasOwnProperty("success")){
-                _callbacks.success = callbacks.success;
+                  _callbacks.success = callbacks.success;
+
               }
               if ( callbacks.hasOwnProperty("error")){
                 _callbacks.error = callbacks.error;
               }
+              
               return _callbacks;
           }
           
           // In the event of weirdness that we didn't capture, return empty callbacks
           return _callbacks
-        }
-    };
+        },
+    }
 
     // Base64 Library from http://www.webtoolkit.info
     cm.Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(a){var b="";var c,d,e,f,g,h,i;var j=0;a=cm.Base64._utf8_encode(a);while(j<a.length){c=a.charCodeAt(j++);d=a.charCodeAt(j++);e=a.charCodeAt(j++);f=c>>2;g=(c&3)<<4|d>>4;h=(d&15)<<2|e>>6;i=e&63;if(isNaN(d)){h=i=64}else if(isNaN(e)){i=64}b=b+this._keyStr.charAt(f)+this._keyStr.charAt(g)+this._keyStr.charAt(h)+this._keyStr.charAt(i)}return b},decode:function(a){var b="";var c,d,e;var f,g,h,i;var j=0;a=a.replace(/[^A-Za-z0-9\+\/\=]/g,"");while(j<a.length){f=this._keyStr.indexOf(a.charAt(j++));g=this._keyStr.indexOf(a.charAt(j++));h=this._keyStr.indexOf(a.charAt(j++));i=this._keyStr.indexOf(a.charAt(j++));c=f<<2|g>>4;d=(g&15)<<4|h>>2;e=(h&3)<<6|i;b=b+String.fromCharCode(c);if(h!=64){b=b+String.fromCharCode(d)}if(i!=64){b=b+String.fromCharCode(e)}}b=cm.Base64._utf8_decode(b);return b},_utf8_encode:function(a){a=a.replace(/\r\n/g,"\n");var b="";for(var c=0;c<a.length;c++){var d=a.charCodeAt(c);if(d<128){b+=String.fromCharCode(d)}else if(d>127&&d<2048){b+=String.fromCharCode(d>>6|192);b+=String.fromCharCode(d&63|128)}else{b+=String.fromCharCode(d>>12|224);b+=String.fromCharCode(d>>6&63|128);b+=String.fromCharCode(d&63|128)}}return b},_utf8_decode:function(a){var b="";var c=0;var d=c1=c2=0;while(c<a.length){d=a.charCodeAt(c);if(d<128){b+=String.fromCharCode(d);c++}else if(d>191&&d<224){c2=a.charCodeAt(c+1);b+=String.fromCharCode((d&31)<<6|c2&63);c+=2}else{c2=a.charCodeAt(c+1);c3=a.charCodeAt(c+2);b+=String.fromCharCode((d&15)<<12|(c2&63)<<6|c3&63);c+=3}}return b}};
