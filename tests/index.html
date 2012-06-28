@@ -2,9 +2,9 @@
 <html>
   <head>
     <title>CloudMine - JavaScript Library v0.9 Unit Tests</title>
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
-    <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
-    <script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
+    <link rel="stylesheet" href="lib/qunit.css" type="text/css" media="screen" />
+    <script src="lib/jquery.js"></script>
+    <script type="text/javascript" src="lib/qunit.js"></script>
     <script type="text/javascript" src="../js/cloudmine.js"></script>
     <script type="text/javascript" src="tests.js"></script>
     <style>
@@ -70,13 +70,17 @@
         <button class='skip'>Skip test</button>
       </div>
     </div>
+    <h4>Stored Information</h4>
     <div>
       <button class='forgetapp'>Forget Application ID and API Key</button>
     </div>
-    <div>
-      <h3>Code snippet necessary for tests</h3>
-      <h4>Name: reverse</h4>
-      <pre class='code'>
+    <h4>Notes</h4>
+    <ul>
+      <li>Internet Explorer users must run unit tests from an SSL enabled server.</li>
+      <li>
+        <h3>Code snippet necessary for tests</h3>
+        <h4>Name: reverse</h4>
+        <pre class='code'>
     function reverse(data) {
       if (data && typeof data == 'object' && data.length) {
         var out = Array(data.length);
@@ -95,6 +99,8 @@
       return data;
     }
     exit(reverse(data));
-      </pre>
+        </pre>
+      </li>
+    </ul>
   </body>
 </html>

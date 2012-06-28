@@ -1443,6 +1443,78 @@
     else throw new Error("Missing jQuery-compatible ajax implementation", "cloudmine.js");
   }
 
+  // IE 8 - 9 XDomainRequest AJAX Transport.
+  // Need to hack around the severe and unnecessary limitations that were imposed.
+  if (window.XDomainRequest && !window.atob) {
+    $.ajaxTransport(function(options, originalOptions, xhr) {
+      var net;
+      return {
+        send: function(headers, finish) {
+          var query = options.url.indexOf('?');
+          query = (query > -1 ? options.url.substring(query + 1) + "&" : '');
+          var url = [apiroot, '/v1/app/', options.appid, '/ie?' + query].join('');
+
+          // Can't send Authorization headers in the url or via normal means.
+          var apikey = headers['X-CloudMine-ApiKey'];
+          var session = headers['X-CloudMine-SessionToken'];
+          if (headers.Authorization) {
+            try {
+              if (!options.data) options.data = {};
+              else options.data = JSON.parse(options.data);
+              options.data['Authorization'] = headers.Authorization;
+              headers.Authorization = undefined;
+              delete headers.Authorization;
+              options.data = JSON.stringify(options.data);
+            } catch (e) {}
+          }
+
+          // Remove headers that will be part of the query.
+          headers['X-CloudMine-ApiKey'] = undefined;
+          delete headers['X-CloudMine-ApiKey'];
+
+          if (session) {
+            headers['X-CloudMine-SessionToken'] = undefined;
+            delete headers['X-CloudMine-SessionToken'];
+          }
+
+          // Add URL parameters that encode headers, action, and app information.
+          url += stringify({
+            method: options.type,
+            action: options.action,
+            headers: headers,
+            apikey: apikey,
+            session_token: session
+          });
+
+          // TODO: We may need to do some body content juggling whenever we do Authorization.
+          net = new XDomainRequest();
+          net.onload = function() {
+            finish(200, 'success', net.responseText, 'Content-Type: ' + net.contentType);
+          }
+          net.onerror = function() {
+            finish(0, 'error', net.responseText, 'Content-Type: ' + net.contentType);
+          }
+          net.ontimeout = function() {
+            finish(0, 'timeout', net.responseText, 'Content-Type: ' + net.contentType);
+          }
+          net.onabort = function() {
+            finish(0, 'abort', net.responseText, 'Content-Type: ' + net.contentType);
+          }
+
+          net.open('POST', url);
+          net.send(options.data || null);
+        },
+
+        abort: function() {
+          if (net) {
+            net.abort();
+            net = null;
+          }
+        }
+      };
+    });
+  }
+
   // Base64 Library from http://www.webtoolkit.info
   var Base64 = {
 	  // private property
