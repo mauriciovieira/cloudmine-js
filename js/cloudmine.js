@@ -365,21 +365,9 @@
 
         apicall.done(response);
       } else if (options.mode === 'buffer' && (ArrayBuffer || Buffer)) {
-        apicall.setProcessor(function(data) {
-          var buffer;
-          if (Buffer) {
-            buffer = new Buffer(data, 'binary');
-          } else {
-            buffer = new ArrayBuffer(data.length);
-            var charView = new Uint8Array(buffer);
-            for (var i = 0; i < data.length; ++i) {
-              charView[i] = data[i] & 0xFF;
-            }
-          }
-
-          response.success[key] = buffer;
-          return response;
-        }).done();
+        apicall.setProcessor(APICall.binaryResponse).done();
+      } else if (options.mode == 'canvas' && options.canvas) {
+        apicall.setProcessor(APICall.binaryCanvasResponse).done();
       } else {
         // Raw data return. Do not attempt to process the result.
         apicall.setProcessor(function(data) {
@@ -1038,6 +1026,47 @@
     apicall.trigger('complete', data, apicall);      
   }
 
+  /** Handle Binary responses from CloudMine
+   * @private
+   */
+  APICall.binaryBufferResponse = function(data) {
+    var buffer;
+    if (Buffer) {
+      buffer = new Buffer(data, 'binary');
+    } else {
+      buffer = new ArrayBuffer(data.length);
+      var charView = new Uint8Array(buffer);
+      for (var i = 0; i < data.length; ++i) {
+        charView[i] = data[i] & 0xFF;
+      }
+    }
+    
+    return buffer;
+  }
+
+  /**
+   * Handle Binary responses in Canvas mode from CloudMine
+   * @private
+   */
+  APICall.binaryCanvasResponse = function(data, xhr, response) {
+    if (CanvasRenderingContext2D && FileReader) {
+      var reader = new FileReader();
+      var canvasX = response.options.x || 0;
+      var canvasY = response.options.y || 0;
+      var canvas = response.options.canvas;
+      if (canvas.getContext) canvas = canvas.getContext('2d');
+
+      /** @private */
+      reader.onload = function(e) {
+        var image = new Image();
+        image.src = e.target.result;
+        canvas.drawImage(image, canvasX, canvasY);
+      }
+      
+      reader.readAsDataURL(file);
+    } 
+    return data;
+  }
 
   /**
    * Standard CloudMine response for the 200-299 range responses.
