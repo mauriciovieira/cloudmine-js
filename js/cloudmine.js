@@ -961,8 +961,6 @@
           }, 1);
         } else {
           this.xhr = ajax(this.url, this.config);
-          this.config = undefined;
-          delete this.config;
         }
       }
       return this;
@@ -1050,17 +1048,16 @@
    */
   APICall.binaryCanvasResponse = function(data, xhr, response) {
     if (CanvasRenderingContext2D && FileReader) {
-      var reader = new FileReader();
-      var canvasX = response.options.x || 0;
-      var canvasY = response.options.y || 0;
-      var canvas = response.options.canvas;
+      var reader = new FileReader(), opts = response.config.options;
+      
+      var canvas = opts.canvas;
       if (canvas.getContext) canvas = canvas.getContext('2d');
 
       /** @private */
       reader.onload = function(e) {
         var image = new Image();
         image.src = e.target.result;
-        canvas.drawImage(image, canvasX, canvasY);
+        canvas.drawImage(image, opts.x || 0, opts.y || 0);
       }
       
       reader.readAsDataURL(file);
