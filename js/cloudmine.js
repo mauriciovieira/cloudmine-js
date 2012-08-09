@@ -1,4 +1,4 @@
-/* CloudMine JavaScript Library v0.9 cloudmine.me | cloudmine.me/license */ 
+/* CloudMine JavaScript Library v0.9 cloudmine.me | cloudmine.me/license */
 (function() {
   /**
    * Construct a new WebService instance
@@ -12,7 +12,7 @@
    * <p>   200, 201, 400, 401, 404, 409, ok, created, badrequest, unauthorized, notfound, conflict,
    *    success, error, complete, meta, result, abort
    * <p>Event order: success callbacks, meta callbacks, result callbacks, error callbacks, complete
-   * callbacks 
+   * callbacks
    *
    * <p>Example:
    * <pre class='code'>
@@ -64,22 +64,27 @@
     /**
      * Get data from CloudMine.
      * Results may be affected by defaults and/or by the options parameter.
-     * @param {string|string[]|null} keys If set, return the specified keys, otherwise return all keys. 
+     * @param {string|string[]|null} keys If set, return the specified keys, otherwise return all keys.
      * @param {object} options Override defaults set on WebService. See WebService constructor for parameters.
      * @return {APICall} An APICall instance for the web service request used to attach events.
      */
-    get: function(keys, options) {
+    get: function(keys, options, action) {
       options = opts(this, options);
+      action = action || 'text';
       keys = {
         keys: isArray(keys) ? keys.join(',') : keys
       };
 
       return new APICall({
-        action: 'text',
+        action: action,
         type: 'GET',
         options: options,
         query: server_params(options, keys)
       });
+    },
+
+    getAcls: function() {
+      return this.get('', {}, 'access');
     },
 
     /**
@@ -151,17 +156,25 @@
      * @memberOf WebService.prototype
      */
     set: function(key, value, options) {
-      if (isObject(key)) options = value;
-      else {
-        if (!key) key = uuid();
-        var out = {};
-        out[key] = value;
-        key = out;
+      if (isObject(key)){
+        options = value;
+      } else {
+        // If it's an acl object structure the payload a bit differently and use a different endpoint
+        if (value.__type__ === 'acl'){
+          value.__id__ = key;
+          key = value;
+          action = 'access';
+        } else {
+          var out = {};
+          out[key] = value;
+          key = out;
+          action = 'text';
+        }
       }
       options = opts(this, options);
 
       return new APICall({
-        action: 'text',
+        action: action,
         type: 'PUT',
         options: options,
         query: server_params(options),
@@ -260,7 +273,7 @@
         options: options
       });
     },
-    
+
     /**
      * Get all user objects.
      * Results may be affected by defaults and/or by the options parameter.
@@ -275,7 +288,7 @@
         type: 'GET',
         query: server_params(options, ''),
         options: options
-      }); 
+      });
     },
 
     /**
@@ -293,7 +306,7 @@
         type: 'GET',
         query: server_params(options, ''),
         options: options
-      }); 
+      });
     },
 
     /**
@@ -586,7 +599,7 @@
         email: userid
       });
 
-      return new APICall({ 
+      return new APICall({
         action: 'account/password/reset',
         type: 'POST',
         options: options,
@@ -792,6 +805,22 @@
       return this.options.session_token == null;
     },
 
+   /**
+    * Create standard acl object
+    * @param {array} permissions list, containing any of "r" for read, "u" for update, "d" for delete
+    */
+    acl: function(permissions, members, extra){
+      var acl ={ __type__: 'acl',
+                 members: members,
+                 permissions: permissions };
+      if (extra !== undefined){
+        for (key in ownProperties(extra)){
+          acl[key] = extra[key];
+        }
+      }
+      return acl;
+    },
+
     /**
      * @private
      */
@@ -891,7 +920,7 @@
       'X-CloudMine-Agent': agent,
       'X-CloudMine-UT': opts.user_token
     };
-   
+
     this.responseHeaders = {};
     this.responseText = null;
     this.status = null;
@@ -906,7 +935,7 @@
       }
       if (session != null) this.requestHeaders['X-CloudMine-SessionToken'] = session;
     }
-    
+
     // Merge in headers in case-insensitive (if necessary) manner.
     for (var key in this.config.headers) {
       mapInsensitive(this.requestHeaders, key, this.config.headers[key]);
@@ -1114,7 +1143,7 @@
       }
       return this;
     },
-    
+
     /**
      * Get a response header using case insensitive searching
      * Note: It is faster to use the exact casing as no searching is necessary when matching.
@@ -1131,7 +1160,7 @@
    * used to circumvent the standard AJAX call functionality for calls that are not currently running.
    * @param {APICall} apicall The api call to affect. Can be either a completed request or a deferred request.
    * @param {object} data Processed data where the top level keys are: success, errors, meta, result.
-   * 
+   *
    * @private
    * @function
    * @memberOf APICall
@@ -1187,7 +1216,7 @@
   /**
    * Standard CloudMine response for the 200-299 range responses.
    * This will transform the response so that APICall.complete will trigger the appropriate handlers.
-   * 
+   *
    * @private
    * @function
    * @memberOf APICall
@@ -1233,7 +1262,7 @@
   /**
    * Minimal processing of data so that the success handler is called upon completion.
    * This assumes any response in the 200-299 range is a success.
-   * 
+   *
    * @private
    * @function
    * @memberOf APICall
@@ -1246,7 +1275,7 @@
 
   /**
    * Process data into CMObjects, return them under their keys.
-   * 
+   *
    * @private
    * @function
    * @memberOf APICall
@@ -1270,7 +1299,7 @@
    * @param {string} contentType The content-type of the file. If not specified, it will guess if possible,
    *                             otherwise assume application/octet-stream.
    * @return {APICall} The apicall object that was given.
-   * 
+   *
    * @private
    * @function
    * @memberOf APICall
@@ -1435,7 +1464,7 @@
     later: false,
     processData: false,
     dataType: 'text',
-    processResponse: APICall.textResponse,
+    processResponse: APICall.objectResponse,
     crossDomain: true,
     cache: false
   };
@@ -1582,7 +1611,12 @@
   }
 
   function isArray(item) {
-    return isObject(item) && item.length != null
+    if (isObject(item) && item !== null) {
+      if (item.length != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   function isFunction(item) {
@@ -1671,7 +1705,7 @@
   function merge(obj/*, in...*/) {
     for (var i = 1; i < arguments.length; ++i) {
       each(arguments[i], function(value, key, collection) {
-        if (value != null) obj[key] = value; 
+        if (value != null) obj[key] = value;
       });
     }
     return obj;
@@ -1874,7 +1908,7 @@
 				  i += 3;
 			  }
 		  }
- 
+
 		  return string;
 	  }
   }
@@ -1919,31 +1953,33 @@
 
   var CMObject = Class.extend('CMObject', {
     initialize: function(key, data, SpecifiedWebService){
-      // Let the user specify a custom WebService or resort to instance()
+      /* Let the user specify a WebService object. If none specified, resort to cloudmine.WebService.instance() */
       this.options.WebService = SpecifiedWebService ? SpecifiedWebService : cloudmine.WebService.instance();
-      // Save object's CloudMine key
       this.options.key = key;
-      // Save object's CloudMine data (provided by WebService)
       for (var key in data){
         this[key] = data[key];
       }
-      // Save serverData for modified comparison
+      /* Stash the server data for modified() and modifiedFields() comparisons */
       this.options.serverData = data;
     },
+
+    /* Stash server data here on every pull from the cloud */
     options: {
       serverData: {},
     },
-    // Returns Object of all data
+
+    /* Return a basic Object containing the object data */
     toJSON: function(){
       var data = {};
-      for (var key in this){
-        if (this.hasOwnProperty(key) && !isFunction(this[key]) && key !== 'options' && key !== 'key'){
-          data[key] = this[key];          
+      for (var key in ownProperties(this)){
+        if (!isFunction(this[key]) && key !== 'options' && key !== 'key'){
+          data[key] = this[key];
         }
       }
       return data;
     },
-    // Save local changes to remote copy
+
+    /* Like git push, save changes made locally to the cloud */
     save: function(){
       var self = this;
       this.options.WebService.update(this.options.key, this.toJSON()).on('success', function(response){
@@ -1951,41 +1987,68 @@
         self.options.serverData = self.toJSON();
       });
     },
-    /*
-    saveAs: function(key){
-      var self = this;
-      this.options.WebService.set(key, self.toJSON()).on('success', function(response){
-        newObject = new cloudmine.Object(key, response);
-        // Don't know how to return this new object with the current APICall design
-      });
+
+    /* Grant permission via user ACLs
+       If called on acl object:     add given user.__id__ to members array
+       If called on generic object: add given acl.__id__ to __access__ array */
+    grant: function(__id__){
+      /* Ensure it's an array */
+      if (isString(__id__)) __id__ = [__id__];
+      if (this.isAcl()){
+        this.members = this.members.concat(__id__);
+      } else if (this.isUser()){
+        throw new Error('This is unsupported. Run .grant() on the desired acl object with this user\'s __id__ ' + this.__id__ + ' as the parameter');
+      } else {
+        if (this.__access__ === undefined){
+          this.__access__ = __id__;
+        } else {
+          this.__access__ = this.__access__.concat(__id__);
+        }
+      }
+      return this;
     },
-    */
-    // Customizable parsing method that runs on all server responses before being committed to the object
+
+    /* Parsing method, all server responses are run through this
+       Override to filter out keys, etc. */
     parse: function(data){
       return data;
     },
-    // Fetch the newest data from the server, merge it in with what we already have.
-    // Preserves local changes by using merge()
+
+    /* Like git pull, fetch potential new data from the server and merge it into the local copy
+       Overwrites local changes, so save() before fetching if you intend to keep them */
     fetch: function(){
       var self = this;
       this.options.WebService.get(this.options.key).on('success', function(response){
         var data = self.parse(response.success[self.options.key]),
             merged = merge({}, ownProperties(self), ownProperties(data));
         for (var key in merged) self[key] = merged[key];
-        // Commit the server data to the object for further modified() checks.
+        /* Stash the known server data for modified comparison */
         self.options.serverData = data;
       });
     },
-    // Returns bool
+
+    /* Removes an attribute */
+    remove: function(key){
+      delete this[key];
+    },
+
+    /* Returns a boolean - has the local version of it been changed since it came from the server? */
     modified: function(){
+      /* First just check the keys before going into the values */
+      if (Object.keys(this.toJSON()).join('') !== Object.keys(this.options.serverData).join('')){
+        return true;
+      }
+      /* If the keys match, check all the values */
       for (var key in this.toJSON()){
         if (JSON.stringify(this[key]) !== JSON.stringify(this.options.serverData[key])){
           return true;
         }
       }
+      /* If nothing has come up, then the object is untouched */
       return false;
     },
-    // Returns array of changed keys
+
+    /* Returns array of changed keys */
     modifiedFields: function(){
       var changed = [];
       for (var key in this.toJSON()){
@@ -1994,11 +2057,23 @@
         }
       }
       return changed;
+    },
+
+    /* Existential functions return booleans */
+    isUser: function(){
+      return (this.__type__ === 'user');
+    },
+    isAcl: function(){
+      return (this.__type__ === 'acl');
     }
   }, true);
-  CMObject.find = function(){ // use cm.ws.instance 
-   
+
+  CMObject.find = function(){ // use cm.ws.instance
+
   }
+
+  CMObject.prototype.push = CMObject.prototype.save;
+  CMObject.prototype.pull = CMObject.prototype.fetch;
 
   window.cloudmine.Object = CMObject;
 
