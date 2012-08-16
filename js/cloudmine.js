@@ -947,6 +947,9 @@
 
     var self = this, sConfig = this.config;
 
+    // Allow override of processResponse with a string name
+    if (opts.processResponse !== undefined) sConfig.processResponse = APICall[opts.processResponse];
+
     /** @private */
     this.config.complete = function(xhr, status) {
       var data;
@@ -1464,7 +1467,7 @@
     later: false,
     processData: false,
     dataType: 'text',
-    processResponse: APICall.objectResponse,
+    processResponse: APICall.textResponse,
     crossDomain: true,
     cache: false
   };
@@ -1963,8 +1966,8 @@
       this.options.serverData = data;
     },
 
-    /* Stash server data here on every pull from the cloud */
     options: {
+      /* Stash server data here on every pull from the cloud */
       serverData: {},
     },
 
@@ -2075,6 +2078,78 @@
   CMObject.prototype.push = CMObject.prototype.save;
   CMObject.prototype.pull = CMObject.prototype.fetch;
 
+  var CMQuery = Class.extend('CMObject', {
+    initialize: function(key, data, SpecifiedWebService){
+      this.params = {
+        toplevel: {},
+        location: {}  
+      };
+      this.last_key = '';
+      return this;
+    },
+    where: function(key) { 
+      this.last_key = key;
+      return this;
+    },
+    equals: function(value) {
+      this.params.toplevel[this.last_key] = value;
+      return this;
+    },
+    or: function(value) {
+      this.params.toplevel[this.last_key] += ' or ' + value;
+    },
+    and: function(value) {
+
+    },
+    in: function(value) {
+      if (value instanceof Array) {
+        // Keep it that way
+      } else if (typeof(value) === 'string'){
+        value = value.split(', ');
+      }
+      this.params.toplevel[this.last_key] = value;
+      return this;
+    },
+    class: function(classname) {
+      this.params.__class__ = classname;
+      return this;
+    },
+    stringify: function() {
+      var string = '', toplevel = this.params.toplevel, location = this.params.location;
+      if (!isEmptyObject(toplevel)) {
+          string += '[';
+          for (var key in toplevel){
+            if (toplevel[key] instanceof Array){
+              for (var i = 0; i < toplevel[key].length; ++ i){
+                string += this._render_assertion(key, toplevel[key][i]);
+                if (i != toplevel[key].length - 1) string += ' or ';
+              }
+              string += ', ';
+            } else {
+              string += this._render_assertion(key, toplevel[key]) + ', ';
+            }
+          }
+          string = (string + ']').replace(', ]', ']');
+        if (!isEmptyObject(this.params.location)) {
+          
+        } else {
+          
+        }
+      } else {
+        if (!isEmptyObject(location)){
+          string += 'location[';
+        }
+      }
+      return string;
+    },
+    _render_assertion: function(key, value) {
+      return key + ' = ' + (typeof(value) === 'string' ? '"' + value + '"' : value);
+    }
+  });
+
+
+  /* Export Object and Query to the cloudmine object */
   window.cloudmine.Object = CMObject;
+  window.cloudmine.Query = CMQuery;
 
 })();
